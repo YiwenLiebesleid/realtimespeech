@@ -101,8 +101,11 @@ def enroll_process(path, nparray):
 def load_sample_process():
     client_socket = open_socket()
     send_string(client_socket, "load_samples")
-    receive_string(client_socket)
+    # receive the response along with enrolled names
+    info = receive_string(client_socket)
     close_socket(client_socket)
+    enrolled_names = info.split(":")[-1].split(",")
+    return enrolled_names
 
 # process the recognize command
 def recognize_process(audio_np):
@@ -112,6 +115,16 @@ def recognize_process(audio_np):
     name = receive_string(client_socket)
     close_socket(client_socket)
     return name
+
+
+# process the feedback command
+def feedback_process(path, nparray):
+    client_socket = open_socket()
+    send_string(client_socket, "feedback")
+    send_nparray(client_socket, nparray)
+    send_string(client_socket, path)
+    receive_string(client_socket)
+    close_socket(client_socket)
 
 #--------------------------------testings-----------------------#
 # test = np.load("temp.npy")

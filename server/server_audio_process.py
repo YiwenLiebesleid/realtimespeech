@@ -82,7 +82,12 @@ def receive_info(server_socket):
         print("Got load sample command")
         global sample_list
         sample_list = vad_speaker_verification.load_samples()
-        response_message(client_socket, "sample loading successful")
+
+        # collect all the sample names in a string, divided by comma
+        enrolled_name_strings = ','.join(list(sample_list.keys()))
+        res_msg_combined = "sample loading successful, enrolled:" + enrolled_name_strings
+
+        response_message(client_socket, res_msg_combined)
     elif command == "recognize":
         print("Got recognize command")
 
@@ -104,6 +109,17 @@ def receive_info(server_socket):
         # Get the current datetime with milliseconds
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
         print("Current time to end processing numpy array:", current_time)
+
+    elif command == "feedback":
+        print("Got feedback command")
+        numpy_data = receive_data(client_socket)
+        numpy = decode_numpy(numpy_data)
+        print("Got feedback numpy data")
+        path_data = receive_data(client_socket)
+        path = decode_string(path_data)
+        print(path)
+        np.save(path, numpy)
+        response_message(client_socket, "feedback save successful")
 
     client_socket.close()
     print("Connection closed.")

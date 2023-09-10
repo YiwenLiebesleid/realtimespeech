@@ -3,6 +3,9 @@ import tkinter as tk
 import time
 import threading
 import sound_recording
+import feedback
+
+NOT_SPEECH = "Not Speech"
 
 root = tk.Tk()
 root.geometry('600x400')
@@ -49,32 +52,47 @@ def enrollment_page():
     enrollment_frame.pack(pady=20)
     
 # update the name label for who the identified speaker is
-def update_name(name_lb):
-    sound_recording.load_samples()
+def update_name(name_lb, prev_name_lb):
+    # sound_recording.load_samples()
     time.sleep(1)
+    prev_name = ""
     while(True):
         audio_np = sound_recording.audio_to_numpy(1)
         name = sound_recording.verify_speaker(audio_np)
         name_lb.config(text=name)
+        if len(prev_name) == 0:
+            prev_name_lb.config(text="")
+        else:
+            prev_name_lb.config(text="last: " + prev_name)
+        prev_name = "" if name == NOT_SPEECH else name
 
+
+# load samples first
 # start a new thread for updating the name label
-def update_name_threading(name_lb):
-    threading.Thread(target=update_name, args=(name_lb,)).start()
+def update_name_threading(name_lb, prev_name_lb):
+    name_lb.config(text="loading samples...")
+    sound_recording.load_samples()
+    threading.Thread(target=update_name, args=(name_lb,prev_name_lb,)).start()
+    # add feedback frame
+    feedback.feedback_page(main_frame)
+
 
 # call recognition page
 def recognition_page():
     recognition_frame = tk.Frame(main_frame)
 
-    name_lb = tk.Label(recognition_frame, text = 'name', font=('Bold', 20))
+    # display previous name
+    prev_name_lb = tk.Label(recognition_frame, text = '', font=(10))
+    prev_name_lb.pack(expand=True, anchor="center")
+    name_lb = tk.Label(recognition_frame, text = 'Name', font=('Bold', 14))
     name_lb.pack(expand=True, anchor="center")
 
     # button to start the speaker identification process
     start_rec_btn = tk.Button(recognition_frame, text="Start Recognition",  font=('Bold', 15),
                              fg='#158aff', bd=0,
-                             command=lambda:update_name_threading(name_lb))
+                             command=lambda:update_name_threading(name_lb, prev_name_lb))
     start_rec_btn.pack(expand=True, anchor="center")
-
-    recognition_frame.pack(pady=20)
+    recognition_frame.pack(pady=5)
 
 # page switching
 def hide_page():

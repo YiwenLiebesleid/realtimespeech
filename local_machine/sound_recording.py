@@ -10,7 +10,12 @@ output_file = "temp.npy"
 # defined sample rate
 sample_rate = 16000
 # defined number of channels
-channels = 1 
+channels = 1
+
+# define enrolled names as a list
+enrolled_names = []
+# slide-window for the most recent 3 seconds, use for feedback
+record_3_sec = []
 
 # record audio from default microphone and send it to linux machine
 def record_sample(duration, output_file):
@@ -27,8 +32,15 @@ def record_sample(duration, output_file):
 
 # record audio and convert it to a tensor
 def audio_to_numpy(duration):
+    global record_3_sec
     recording = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=channels, dtype='float64')
     sd.wait()  # Wait for recording to finish
+
+    # slide-window: past 3 seconds
+    record_3_sec.append(recording)
+    if len(record_3_sec) > 3:
+        record_3_sec.pop(0)
+
     return recording
 
 # connect to server and pass the 1 sec recording for processing
@@ -39,8 +51,8 @@ def verify_speaker(audio_np):
 
 # connet to server to load sample audios into instance variables to start recognition
 def load_samples():
-    client_sb.load_sample_process()
-    
+    global enrolled_names
+    enrolled_names = client_sb.load_sample_process()
 
 
 # --------------------testing-------------------------#
